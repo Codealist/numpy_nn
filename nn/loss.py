@@ -11,4 +11,4 @@ class MSE:
 
     @staticmethod
     def differentiate(a, y):
-        return 2 * (y - a)
+        return 2 * (a - y)

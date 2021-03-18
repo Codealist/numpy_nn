@@ -34,7 +34,7 @@ class Sigmoid(Activation):
         -------
         A - [batch * L-units] Activation output from the current layer
         """
-        return 1 / (1 + np.exp(z))
+        return 1 / (1 + np.exp(-z))
 
     @staticmethod
     def differentiate(dA, a):
