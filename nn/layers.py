@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Type
-from nn.activations import Activation, Sigmoid
+from nn.activations import Sigmoid
+from scipy.sparse import csr_matrix
 
 
 class Layer:
@@ -17,7 +18,7 @@ class Input(Layer):
         self.cache["A"] = x
 
 
-class HiddenLayer(Layer):
+class FullyConnected(Layer):
     """
     Fully connected layer
     """
@@ -74,15 +75,67 @@ class HiddenLayer(Layer):
         self.gradients = {"dW": dW, "db": db}
 
 
-# class Output(Layer):
-#     def __init__(self, prev_layer: Layer, out_units: int, loss_function):
-#         self.m = prev_layer.n
-#         self.n = out_units
-#         self.loss_function = loss_function
-#         self.prev_layer = prev_layer
-#
-#     def forward_step(self):
-#
-#
-#     def backward_step(self):
-#         pass
+class Activation(Layer):
+    pass
+
+
+class Convolution(Layer):
+
+    def __init__(self, kernels, padding, strides):
+        """
+        Initializes the layer with convolution
+        Output is a 3D tensor of shape:
+        (W−K+2P)/S+1 by (W−K+2P)/S+1 by number of kernels
+
+        Parameters
+        ----------
+        kernels:
+            Collection of kernels to train. [(2,2), (3,3), etc]
+            Note that it has to be aligned with padding and strides,
+            so that resulting feature map is consistent in size
+            For example, given input rows=cols=32, two kernels [(2,2), (4,4)]
+            there should be paddings [1, 0] and same strides, so the output
+            shape is 16x16x2
+        padding - padding numbers (no "valid" and "same" for now)
+        strides - steps over the matrix (only square for now)
+        """
+        self.kernels = kernels
+        self.padding = padding
+        self.strides = strides
+        self.cache = dict()
+        self.gradients = dict()
+
+    @staticmethod
+    def feature_map_size(w, k, p, s):
+        return 1 + (w - k + 2 * p) / s
+
+    def sparse_kernel(self, kernel, w, p, s):
+        k = kernel.shape[0]
+        fm_size = self.feature_map_size(w, k, p, s)
+        out_size = fm_size ** 2
+        row = np.array(range(out_size)).repeat(k)
+        gap = w - k + 1
+        for i in range(k):
+
+
+        col = list(range(k))
+
+        col += list(range(col[-1] + gap, col[-1] + gap + k))
+        kernel = kernel.flatten()
+        data = np.tile(kernel, out_size)
+        kernel = csr_matrix((data, (row, col)), shape=(3, 3)).toarray()
+
+    def convolve(self):
+        pass
+
+    def forward_step(self):
+        pass
+
+    def backward_step(self):
+        pass
+
+
+class Pooling(Layer):
+
+    def __init__(self, window, stride):
+        pass
