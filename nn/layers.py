@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Type
-from nn.activations import Sigmoid
+from nn.activations import Sigmoid, Activation as ActFunction
 from scipy.sparse import csr_matrix
 
 
@@ -22,12 +22,12 @@ class FullyConnected(Layer):
     """
     Fully connected layer
     """
-    activation: Type[Activation] = None
+    activation: Type[ActFunction] = None
     weights = None
     bias = None
     gradients = None
 
-    def __init__(self, prev_layer: Layer, units: int, activation: Type[Activation], seed=1):
+    def __init__(self, prev_layer: Layer, units: int, activation: Type[ActFunction], seed=1):
         self.m = units
         self.n = prev_layer.m
         self.activation = activation
@@ -113,17 +113,32 @@ class Convolution(Layer):
         k = kernel.shape[0]
         fm_size = self.feature_map_size(w, k, p, s)
         out_size = fm_size ** 2
-        row = np.array(range(out_size)).repeat(k)
-        gap = w - k + 1
-        for i in range(k):
+        vsteps = hsteps = fm_size
 
+        def right_zero_pad(matrix, size):
+            return np.concatenate((kernel, np.zeros((matrix.shape[0], size))), axis=1)
+        kernel = right_zero_pad(kernel, w - k).flatten()
+        kernel = right_zero_pad(kernel, w**2 - kernel.shape[0]).reshape(1, -1)
+        for v in range(vsteps):
+            # go to new line
+            _s = s + w
+            for h in range(hsteps):
+                kernel = np.stack((kernel, np.roll(kernel[-1], _s)), axis=0)
+                # back to default stride
+                _s = s
 
-        col = list(range(k))
-
-        col += list(range(col[-1] + gap, col[-1] + gap + k))
-        kernel = kernel.flatten()
-        data = np.tile(kernel, out_size)
-        kernel = csr_matrix((data, (row, col)), shape=(3, 3)).toarray()
+        # row = np.array(range(out_size)).repeat(k)
+        # gap = w - k
+        # for i in range(k):
+        #
+        #
+        # col = list(range(k))
+        #
+        # col += list(range(col[-1] + gap, col[-1] + gap + k))
+        # kernel = kernel.flatten()
+        # data = np.tile(kernel, out_size)
+        # kernel = csr_matrix((data, (row, col)), shape=(out_size, 3)).toarray()
+        return kernel
 
     def convolve(self):
         pass
